@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from .usermanager import UserManager
-from ..constants import USER_PROFILE_GENDER_CHOICES
 
 class User(AbstractUser):
 
@@ -37,6 +36,12 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(blank=True, upload_to="avatars/", default="avatars/avatar.png")
     website = models.URLField(blank=True, null=True)
+
+    USER_PROFILE_GENDER_CHOICES = [
+        ("M", "Male"),
+        ("F", "Female")
+    ]
+
     gender = models.CharField(max_length=10, choices=USER_PROFILE_GENDER_CHOICES)
     birth_date = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)

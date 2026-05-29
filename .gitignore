@@ -2,14 +2,13 @@ db.sqlite3
 media/
 assets/
 apps/users/management/
-config/.env
+configs/.env
 # pyproject.toml
 **/static/**
 static/
 staticfiles/
 /.venv1
 .venv
-
 
 
 env

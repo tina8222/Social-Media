@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from .usermanager import UserManager
+from apps.users.managers import UserManager
 
 class User(AbstractUser):
 
@@ -22,9 +22,8 @@ class User(AbstractUser):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["email"]),
-            models.Index(fields=["username"]),
             models.Index(fields=["phone_number"]),
+            models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):
@@ -32,17 +31,16 @@ class User(AbstractUser):
 
 
 class UserProfile(models.Model):
+    class GenderChoices(models.TextChoices):
+        MALE = "M", "Male"
+        FEMALE = "F", "Female"
+
     user = models.ForeignKey(User, unique=True, on_delete=models.CASCADE )
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(blank=True, upload_to="avatars/", default="avatars/avatar.png")
     website = models.URLField(blank=True, null=True)
 
-    USER_PROFILE_GENDER_CHOICES = [
-        ("M", "Male"),
-        ("F", "Female")
-    ]
-
-    gender = models.CharField(max_length=10, choices=USER_PROFILE_GENDER_CHOICES)
+    gender = models.CharField(max_length=10, choices=GenderChoices)
     birth_date = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -57,4 +55,4 @@ class UserProfile(models.Model):
 
 
     def __str__(self):
-        return self.user
+        return f"{self.user.username} Profile"

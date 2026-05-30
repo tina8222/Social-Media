@@ -148,7 +148,10 @@ class FollowRequest(models.Model):
         return f"{self.from_user.email} -> {self.to_user.email}"
 
     
-
+class BlockUser(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocker_user")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_user")
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 

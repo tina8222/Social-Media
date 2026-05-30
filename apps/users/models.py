@@ -171,3 +171,10 @@ class BlockUser(models.Model):
     def __str__(self):
         return f"user {self.blocker.username} blocked {self.blocked.username}"
 
+
+class RestrictUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_restrictor")
+    restricted_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="restricted_user")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    

@@ -153,5 +153,21 @@ class BlockUser(models.Model):
     blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_user")
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["blocker", "blocked"],
+                name="unique_block"
+            )
+        ]
 
+        indexes = [
+            models.Index(fields=["blocker"]),
+            models.Index(fields=["blocked"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"user {self.blocker.username} blocked {self.blocked.username}"
 

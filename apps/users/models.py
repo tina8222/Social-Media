@@ -35,11 +35,10 @@ class UserProfile(models.Model):
         MALE = "M", "Male"
         FEMALE = "F", "Female"
 
-    user = models.ForeignKey(User, unique=True, on_delete=models.CASCADE )
+    user = models.ForeignKey(User, unique=True, on_delete=models.CASCADE, related_name="user_profile")
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(blank=True, upload_to="avatars/", default="avatars/avatar.png")
     website = models.URLField(blank=True, null=True)
-
     gender = models.CharField(max_length=10, choices=GenderChoices)
     birth_date = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
@@ -149,8 +148,26 @@ class FollowRequest(models.Model):
         return f"{self.from_user.email} -> {self.to_user.email}"
 
     
+class BlockUser(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocker_user")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_user")
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["blocker", "blocked"],
+                name="unique_block"
+            )
+        ]
 
+        indexes = [
+            models.Index(fields=["blocker"]),
+            models.Index(fields=["blocked"]),
+            models.Index(fields=["created_at"]),
+        ]
 
-
+    def __str__(self):
+        return f"user {self.blocker.username} blocked {self.blocked.username}"
 

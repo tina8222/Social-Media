@@ -35,11 +35,10 @@ class UserProfile(models.Model):
         MALE = "M", "Male"
         FEMALE = "F", "Female"
 
-    user = models.ForeignKey(User, unique=True, on_delete=models.CASCADE )
+    user = models.ForeignKey(User, unique=True, on_delete=models.CASCADE, related_name="user_profile")
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(blank=True, upload_to="avatars/", default="avatars/avatar.png")
     website = models.URLField(blank=True, null=True)
-
     gender = models.CharField(max_length=10, choices=GenderChoices)
     birth_date = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
@@ -149,7 +148,6 @@ class FollowRequest(models.Model):
         return f"{self.from_user.email} -> {self.to_user.email}"
 
     
-
 
 
 

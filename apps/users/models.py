@@ -173,8 +173,28 @@ class BlockUser(models.Model):
 
 
 class RestrictUser(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_restrictor")
-    restricted_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="restricted_user")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="restrictions_created")
+    restricted_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="restrictions_received")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "restricted_user"],
+                name="unique_restrict_user"
+            ),
+            models.CheckConstraint(
+                condition= ~models.Q(user=models.F("restricted_user")),
+                name="prevent_self_restriction"
+            )
+        ]
+
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["restricted_user"]),
+            models.Index(fields=["created_at"])
+        ]
+
+    def __str__(self):
+        return f"{self.restricted_user.username} has restricted"

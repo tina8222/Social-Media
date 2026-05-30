@@ -56,3 +56,101 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} Profile"
+
+
+
+
+
+class Follow(models.Model):
+
+    class FollowStatus(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        ACCEPTED = "ACCEPTED", "Accepted"
+        REJECTED = "REJECTED", "Rejected"
+        CANCELED = "CANCELED" , "Canceled"
+
+    follower = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="following_relationships"
+    )
+
+    following = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="follower_relationships"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=FollowStatus.choices,
+        default=FollowStatus.PENDING
+    )
+
+    is_close_friend = models.BooleanField(default=False)
+    is_muted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["follower", "following"],
+                name="unique_follow_relation"
+            )
+        ]
+
+        indexes = [
+            models.Index(fields=["follower"]),
+            models.Index(fields=["following"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.follower.email} -> {self.following.email}"
+
+
+
+class FollowRequest(models.Model):
+
+    from_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_follow_requests"
+    )
+
+    to_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="received_follow_requests"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints =[
+            models.UniqueConstraint(
+                fields=["from_user","to_user"],
+                name="unique_follow_request"
+            )
+        ]
+
+        indexes = [
+            models.Index(fields=["from_user"]),
+            models.Index(fields=["to_user"]),
+            models.Index(fields=["created_at"]),
+
+        ]
+
+    def __str__(self):
+        return f"{self.from_user.email} -> {self.to_user.email}"
+
+    
+
+
+
+
+

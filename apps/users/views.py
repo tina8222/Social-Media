@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
+    LogoutSerializer,
 )
 
 User = get_user_model()
@@ -67,3 +68,28 @@ class LoginView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self,request):
+        serializer = LogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            token = RefreshToken(serializer.validated_data["refresh"])
+            token.blacklist()
+            return Response( 
+                {
+                    "detail": "Logged out successfully"
+                },
+                status=status.HTTP_200_OK,
+            )
+            
+        except Exception:
+            return Response(
+                {
+                    "detail":"Invalid refresh token"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )

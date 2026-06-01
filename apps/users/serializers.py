@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from .models import UserProfile
 
 User = get_user_model()
 
@@ -58,4 +59,21 @@ class LoginSerializer(serializers.Serializer):
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
-    
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = ["bio", "avatar", "gender", "birth_date", "location", "username"]
+
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+
+        if user_data:
+            instance.user.username = user_data["username"]
+            instance.user.save()
+
+        return super().update(instance, validated_data)

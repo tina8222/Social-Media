@@ -35,7 +35,7 @@ class UserProfile(models.Model):
         MALE = "M", "Male"
         FEMALE = "F", "Female"
 
-    user = models.ForeignKey(User, unique=True, on_delete=models.CASCADE, related_name="user_profile")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user_profile")
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(blank=True, upload_to="avatars/", default="avatars/avatar.png")
     website = models.URLField(blank=True, null=True)

@@ -53,3 +53,9 @@ class LoginSerializer(serializers.Serializer):
         write_only=True,
         required=True,
     )
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    

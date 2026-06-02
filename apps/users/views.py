@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from .models import UserProfile, Follow, FollowRequest
+from .validators import validator_target_user
 
 from .serializers import (
     RegisterSerializer,
@@ -12,7 +13,7 @@ from .serializers import (
     LogoutSerializer,
     ProfileSerializer
 )
-from .validators import validator_target_user
+
 
 User = get_user_model()
 

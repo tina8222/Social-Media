@@ -9,4 +9,3 @@ def validator_target_user(username):
     except User.DoesNotExist:
         raise ValidationError("user does not exist")
 
-    

@@ -196,7 +196,7 @@ class FollowersView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        users = Follow.objects.filter(following=request.user)
+        users = Follow.objects.filter(following=request.user).order_by("-created_at")
         serializer = FollowersListSerializer(instance=users, many=True)
         if not serializer:
             return Response(serializer.errors)

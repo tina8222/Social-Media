@@ -176,11 +176,13 @@ class UnfollowUserView(APIView):
         target_user = validator_target_user(username)
 
         following = Follow.objects.filter(follower=request.user, following=target_user).first()
+        request_follow = FollowRequest.objects.filter(from_user=request.user, to_user=target_user)
 
         if not following:
             error_not_follow = {"error": "you are not following this user"}
             return Response(error_not_follow, status=status.HTTP_400_BAD_REQUEST)
 
+        request_follow.delete()
         following.delete()
         delete_detail = {"detail": "success"}
         return Response(delete_detail, status=status.HTTP_200_OK)

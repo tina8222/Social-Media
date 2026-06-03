@@ -1,4 +1,6 @@
 from rest_framework.pagination import PageNumberPagination
 
-class FollowersPaginations(PageNumberPagination):
+class FollowListPaginations(PageNumberPagination):
     page_size = 10
+
+

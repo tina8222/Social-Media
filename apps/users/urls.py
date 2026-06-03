@@ -9,6 +9,7 @@ from .views import (
     FollowUserView,
     UnfollowUserView,
     FollowersListView,
+    FollowingListView
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     path("follow-user/", FollowUserView.as_view(), name="follow_user"),
     path("unfollow-user/", UnfollowUserView.as_view(), name="unfollow_user"),
     path("followers/", FollowersListView.as_view(), name="followers_list"),
+    path("followings/", FollowingListView.as_view(), name="following_list")
 ]

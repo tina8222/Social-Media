@@ -5,16 +5,19 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.generics import ListAPIView
 from django.shortcuts import get_object_or_404
+from yaml import serialize
+
 from .models import UserProfile, Follow, FollowRequest
 from .validators import validator_target_user
-from .paginations import FollowersPaginations
+from .paginations import FollowListPaginations
 
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
     LogoutSerializer,
     ProfileSerializer,
-    FollowersListSerializer
+    FollowersListSerializer,
+    FollowingListSerializer
 )
 
 
@@ -191,8 +194,8 @@ class UnfollowUserView(APIView):
         return Response(delete_detail, status=status.HTTP_200_OK)
 
 
-class FollowersView(ListAPIView):
-    pagination_class = FollowersPaginations
+class FollowersListView(ListAPIView):
+    pagination_class = FollowListPaginations
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -201,3 +204,16 @@ class FollowersView(ListAPIView):
         if not serializer:
             return Response(serializer.errors)
         return Response(serializer.data)
+
+
+class FollowingListView(ListAPIView):
+    pagination_class = FollowListPaginations
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        users = Follow.objects.filter(follower=request.user).order_by("-created_at")
+        serializer = FollowingListSerializer(instance=users, many=True)
+        if not serializer:
+            return Response(serializer.errors)
+        return Response(serializer.data)
+

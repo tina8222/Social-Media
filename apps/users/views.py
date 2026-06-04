@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
-from .models import UserProfile
-
+from .models import UserProfile, Follow, FollowRequest
+from .validators import validator_target_user
 
 from .serializers import (
     RegisterSerializer,
@@ -13,6 +13,7 @@ from .serializers import (
     LogoutSerializer,
     ProfileSerializer
 )
+
 
 User = get_user_model()
 
@@ -129,3 +130,34 @@ class ProfileView(APIView):
         if serilizer:
             return Response(serilizer.data, status=status.HTTP_200_OK)
         return Response(serilizer.data, status=status.HTTP_400_BAD_REQUEST)
+
+class FollowUserView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        username = request.query_params.get("username")
+        if not username:
+            error_username_required = {"error": "username is required"}
+            return Response(error_username_required, status=status.HTTP_400_BAD_REQUEST)
+
+        target_user = validator_target_user(username)
+        if request.user == target_user:
+            error_follow_yourself = {"error": "you cannot follow yourself"}
+            return Response(error_follow_yourself, status=status.HTTP_400_BAD_REQUEST)
+
+        already_follow = Follow.objects.filter(follower=request.user, following=target_user).first()
+        if already_follow:
+            error_already_follow = {"error": "you already follow this user"}
+            return Response(error_already_follow, status=status.HTTP_400_BAD_REQUEST)
+
+        already_requested = FollowRequest.objects.filter(from_user=request.user, to_user=target_user).first()
+        if already_requested:
+            error_already_requested = {"error": "follow request already sent"}
+            return Response(error_already_requested, status=status.HTTP_400_BAD_REQUEST)
+
+        FollowRequest.objects.create(from_user=request.user, to_user=target_user)
+        Follow.objects.create(follower=request.user, following=target_user, status=Follow.FollowStatus.PENDING)
+
+        created_detail_text = {"detail": "Follow request sent"}
+        return Response(created_detail_text, status=status.HTTP_201_CREATED)

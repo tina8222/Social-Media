@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import UserProfile
+from .models import UserProfile, Follow
 
 User = get_user_model()
 
@@ -77,3 +77,15 @@ class ProfileSerializer(serializers.ModelSerializer):
             instance.user.save()
 
         return super().update(instance, validated_data)
+
+
+class FollowersListSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="follower.username")
+    first_name = serializers.CharField(source="follower.first_name")
+    last_name = serializers.CharField(source="follower.last_name")
+
+
+    class Meta:
+        model = Follow
+        fields = ["username", "first_name", "last_name", "created_at"]
+

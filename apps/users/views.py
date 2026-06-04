@@ -3,15 +3,18 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.generics import ListAPIView
 from django.shortcuts import get_object_or_404
 from .models import UserProfile, Follow, FollowRequest
 from .validators import validator_target_user
+from .paginations import FollowersPaginations
 
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
     LogoutSerializer,
-    ProfileSerializer
+    ProfileSerializer,
+    FollowersListSerializer
 )
 
 
@@ -186,3 +189,15 @@ class UnfollowUserView(APIView):
         following.delete()
         delete_detail = {"detail": "success"}
         return Response(delete_detail, status=status.HTTP_200_OK)
+
+
+class FollowersView(ListAPIView):
+    pagination_class = FollowersPaginations
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        users = Follow.objects.filter(following=request.user).order_by("-created_at")
+        serializer = FollowersListSerializer(instance=users, many=True)
+        if not serializer:
+            return Response(serializer.errors)
+        return Response(serializer.data)

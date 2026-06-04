@@ -89,3 +89,12 @@ class FollowersListSerializer(serializers.ModelSerializer):
         model = Follow
         fields = ["username", "first_name", "last_name", "created_at"]
 
+
+class FollowingListSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="following.username")
+    first_name = serializers.CharField(source="following.first_name")
+    last_name = serializers.CharField(source="following.last_name")
+
+    class Meta:
+        model = Follow
+        fields = ["username", "first_name", "last_name", "created_at"]

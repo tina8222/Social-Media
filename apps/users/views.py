@@ -1,3 +1,5 @@
+from calendar import error
+
 from django.contrib.auth import get_user_model
 from rest_framework import permissions, status
 from rest_framework.response import Response
@@ -216,4 +218,25 @@ class FollowingListView(ListAPIView):
         if not serializer:
             return Response(serializer.errors)
         return Response(serializer.data)
+
+
+    class FollowRequestView(APIView):
+        permission_classes = [permissions.IsAuthenticated]
+
+        def post(self, request):
+            username = request.query_params.get("username")
+            target_user = get_object_or_404(User, username=username)
+
+            if request.user == target_user:
+                error_request_yourself = {"error": "you cannot send follow request to yourself"}
+                return Response(error_request_yourself, status=status.HTTP_400_BAD_REQUEST)
+
+            already_requested = FollowRequest.objects.filter(from_user=request.user, to_user=target_user).first()
+            if already_requested:
+                error_already_requested = {"error": "follow request already sent"}
+                return Response(error_already_requested, status=status.HTTP_400_BAD_REQUEST)
+
+            FollowRequest.objects.create(from_user=request.user, to_user=target_user, )
+            detail_request_sent = {"detail": "follow request sent"}
+            return Response(detail_request_sent, status=status.HTTP_201_CREATED)
 

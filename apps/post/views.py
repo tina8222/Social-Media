@@ -4,11 +4,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .selectors import get_post_by_id_for_owner
+
 from .serializers import (
     CreatePostSerializer,
     PostSerializer,
+    UpdatePostSerializer,
 )
-from .services import create_post
+from .services import (create_post, update_post,)
 
 
 class CreatePostView(APIView):
@@ -30,3 +33,25 @@ class CreatePostView(APIView):
         )
 
         return Response(PostSerializer(post).data,status=status.HTTP_201_CREATED)
+
+class UpdatePostView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self,request,post_id,):
+
+        post = get_post_by_id_for_owner(post_id=post_id,owner=request.user)
+
+        serializer = UpdatePostSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+
+        post = update_post(
+            post=post,
+            caption=serializer.validated_data.get("caption"),
+            visibility=serializer.validated_data.get("visibility"),
+            media_files=serializer.validated_data.get("media_files"),
+            delete_media_ids=serializer.validated_data.get("delete_media_ids"),
+        )
+
+        return Response(PostSerializer(post).data,status=status.HTTP_200_OK)

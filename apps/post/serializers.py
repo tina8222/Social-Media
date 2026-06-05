@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from .models import Post
-from .models import PostMedia
+from .models import Post , PostMedia
+from .validators import MediaValidationMixin
 
 
-class CreatePostSerializer(serializers.ModelSerializer):
-
+class CreatePostSerializer(MediaValidationMixin,serializers.ModelSerializer):
+    media_required = True
     media_files = serializers.ListField(child=serializers.FileField(),write_only=True,required=True)
 
     class Meta:
@@ -16,54 +16,6 @@ class CreatePostSerializer(serializers.ModelSerializer):
             "media_files",
         )
 
-    def validate_media_files(self, files):
-
-        if not files:
-            raise serializers.ValidationError("At least one media file is required.")
-
-        if len(files) > 10:
-            raise serializers.ValidationError("Maximum 10 files allowed.")
-
-        allowed_image_types = {
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-        }
-
-        allowed_video_types = {
-            "video/mp4",
-            "video/quicktime",
-            "video/x-msvideo",
-        }
-
-        allowed_types = (
-            allowed_image_types |
-            allowed_video_types
-        )
-
-        max_image_size = 5 * 1024 * 1024
-        max_video_size = 50 * 1024 * 1024
-
-        for file in files:
-
-            content_type = getattr(file,"content_type",None)
-
-            if content_type not in allowed_types:
-                raise serializers.ValidationError(
-                    f"{file.name} format is not supported."
-                )
-
-            if content_type.startswith("image"):
-
-                if file.size > max_image_size:
-                    raise serializers.ValidationError(f"{file.name} exceeds 5MB.")
-
-            if content_type.startswith("video"):
-
-                if file.size > max_video_size:
-                    raise serializers.ValidationError(f"{file.name} exceeds 50MB.")
-
-        return files
 
 
 class PostMediaSerializer(serializers.ModelSerializer):
@@ -94,3 +46,20 @@ class PostSerializer(serializers.ModelSerializer):
             "created_at",
             "media",
         )
+
+
+
+class UpdatePostSerializer(MediaValidationMixin,serializers.Serializer):
+    media_required = False
+
+    caption = serializers.CharField(required=False,allow_blank=True)
+    visibility = serializers.ChoiceField(choices=Post.VisibilityChoices.choices,required=False)
+    media_files = serializers.ListField(child=serializers.FileField(),required=False,write_only=True)
+    delete_media_ids = serializers.ListField(child=serializers.IntegerField(),required=False,write_only=True)
+    
+    def validate(self, attrs):
+
+        if not attrs:
+            raise serializers.ValidationError("No data provided.")
+
+        return attrs

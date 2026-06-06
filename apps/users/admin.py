@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, UserProfile
+from .models import User, UserProfile, RestrictUser
 
 
 @admin.register(User)
@@ -12,3 +12,9 @@ class UserAdmin(admin.ModelAdmin):
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ["user", "bio", "avatar", "website", "gender"]
     search_fields = ["user",]
+
+
+@admin.register(RestrictUser)
+class RestrictUserAdmin(admin.ModelAdmin):
+    list_display = ["user", "restricted_user", "created_at"]
+    search_fields = ["restricted_user",]

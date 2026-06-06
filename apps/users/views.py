@@ -7,7 +7,7 @@ from rest_framework.generics import ListAPIView
 from django.shortcuts import get_object_or_404
 from yaml import serialize
 
-from .models import UserProfile, Follow, FollowRequest
+from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
 from .paginations import FollowListPaginations
 
@@ -19,7 +19,8 @@ from .serializers import (
     FollowersListSerializer,
     FollowingListSerializer,
     FollowersCountSerializer,
-    FollowingCountSerializer
+    FollowingCountSerializer,
+    RestrictUserSerializer
 )
 
 
@@ -245,7 +246,7 @@ class UserFollowersCountView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
+    def get(self, request):
         username = request.query_params.get("username")
         target_user = validator_target_user(username)
         followers_count = Follow.objects.filter(following=target_user).count()
@@ -263,7 +264,7 @@ class UserFollowingCountView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
+    def get(self, request):
         username = request.query_params.get("username")
         target_user = validator_target_user(username)
         following_count = Follow.objects.filter(follower=target_user).count()
@@ -275,3 +276,21 @@ class UserFollowingCountView(APIView):
 
         serializer = FollowingCountSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RestrictUserView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        username = request.query_params.get("username")
+        target_user = validator_target_user(username)
+        if target_user == request.user:
+            error_cannot_restrict_yourself = {"error": "you cannot restrict yourself"}
+            return Response(error_cannot_restrict_yourself, status=status.HTTP_400_BAD_REQUEST)
+
+        new_restrict_user = RestrictUser.objects.create(user=request.user, restricted_user=target_user)
+        serializer = RestrictUserSerializer(instance=new_restrict_user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # comments get restrict
+        # have restricted activity

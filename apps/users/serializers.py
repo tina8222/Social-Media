@@ -102,4 +102,8 @@ class FollowingListSerializer(serializers.ModelSerializer):
 
 class FollowersCountSerializer(serializers.Serializer):
     username = serializers.CharField()
-    followers_count = serializers.IntegerField()
+    followers_count = serializers.IntegerField(default=0)
+
+class  FollowingCountSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    following_count = serializers.IntegerField(default=0)

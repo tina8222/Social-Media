@@ -18,7 +18,7 @@ from .serializers import (
     FollowingListSerializer,
     FollowersCountSerializer,
     FollowingCountSerializer,
-    RestrictUserSerializer
+    RestrictUserSerializer,
 )
 
 
@@ -200,10 +200,8 @@ class FollowersListView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        users = Follow.objects.filter(following=request.user).order_by("-created_at")
+        users = Follow.objects.filter(following=request.user).select_related("follower").order_by("-created_at")
         serializer = FollowersListSerializer(instance=users, many=True)
-        if not serializer:
-            return Response(serializer.errors)
         return Response(serializer.data)
 
 
@@ -212,10 +210,8 @@ class FollowingListView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        users = Follow.objects.filter(follower=request.user).order_by("-created_at")
+        users = Follow.objects.filter(follower=request.user).select_related("following").order_by("-created_at")
         serializer = FollowingListSerializer(instance=users, many=True)
-        if not serializer:
-            return Response(serializer.errors)
         return Response(serializer.data)
 
 

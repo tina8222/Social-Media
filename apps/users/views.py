@@ -18,7 +18,8 @@ from .serializers import (
     ProfileSerializer,
     FollowersListSerializer,
     FollowingListSerializer,
-    FollowersCountSerializer
+    FollowersCountSerializer,
+    FollowingCountSerializer
 )
 
 
@@ -255,4 +256,22 @@ class UserFollowersCountView(APIView):
         }
 
         serializer = FollowersCountSerializer(data)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserFollowingCountView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        username = request.query_params.get("username")
+        target_user = validator_target_user(username)
+        following_count = Follow.objects.filter(follower=target_user).count()
+
+        data = {
+            "username": target_user.username,
+            "following_count": following_count
+        }
+
+        serializer = FollowingCountSerializer(data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

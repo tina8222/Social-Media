@@ -109,9 +109,11 @@ class  FollowingCountSerializer(serializers.Serializer):
     following_count = serializers.IntegerField(default=0)
 
 class RestrictUserSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(source="user.username")
-    restricted_user = serializers.CharField(source="restricted_user.username")
+    restricted_user_username = serializers.CharField(source="restricted_user.username", read_only=True)
+    restricted_user_email = serializers.EmailField(source="restricted_user.email", read_only=True)
 
     class Meta:
         model = RestrictUser
-        fields = ["user", "restricted_user"]
+        fields = ["restricted_user_username", "restricted_user_email"]
+
+

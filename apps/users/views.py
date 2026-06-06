@@ -5,11 +5,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.generics import ListAPIView
 from django.shortcuts import get_object_or_404
-from yaml import serialize
-
 from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
-from .paginations import FollowListPaginations
+from .paginations import FollowListPaginations, RestrictedUsersListPagination
 
 from .serializers import (
     RegisterSerializer,
@@ -311,3 +309,20 @@ class UnrestrictUserView(APIView):
             restrict_query.delete()
             message = {"detail": f"{target_user.username} unrestricted!"}
             return Response(message, status=status.HTTP_200_OK)
+
+
+class RestrictedUsersListView(ListAPIView):
+    pagination_class = RestrictedUsersListPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        restricted_users = RestrictUser.objects.filter(user=request.user)
+        serializer = RestrictUserSerializer(instance=restricted_users, many=True)
+        return Response(serializer.data)
+
+    def delete(self, request):
+        restricted_users = RestrictUser.objects.filter(user=request.user)
+        usernames = request.query_params.getlist("username")
+        deleted, _ = RestrictUser.objects.filter(user=request.user, restricted_user__username__in=usernames).delete()
+        deleted_text_detail = {"detail": "selected users unrestricted"}
+        return Response(deleted_text_detail, status=status.HTTP_200_OK)

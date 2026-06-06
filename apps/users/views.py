@@ -1,5 +1,3 @@
-from calendar import error
-
 from django.contrib.auth import get_user_model
 from rest_framework import permissions, status
 from rest_framework.response import Response
@@ -19,7 +17,8 @@ from .serializers import (
     LogoutSerializer,
     ProfileSerializer,
     FollowersListSerializer,
-    FollowingListSerializer
+    FollowingListSerializer,
+    FollowersCountSerializer
 )
 
 
@@ -93,13 +92,13 @@ class LogoutView(APIView):
         try:
             token = RefreshToken(serializer.validated_data["refresh"])
             token.blacklist()
-            return Response( 
+            return Response(
                 {
                     "detail": "Logged out successfully"
                 },
                 status=status.HTTP_200_OK,
             )
-            
+
         except Exception:
             return Response(
                 {
@@ -139,6 +138,7 @@ class ProfileView(APIView):
             return Response(serilizer.data, status=status.HTTP_200_OK)
         return Response(serilizer.data, status=status.HTTP_400_BAD_REQUEST)
 
+
 class FollowUserView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
@@ -164,7 +164,6 @@ class FollowUserView(APIView):
             error_already_requested = {"error": "follow request already sent"}
             return Response(error_already_requested, status=status.HTTP_400_BAD_REQUEST)
 
-        FollowRequest.objects.create(from_user=request.user, to_user=target_user)
         Follow.objects.create(follower=request.user, following=target_user, status=Follow.FollowStatus.PENDING)
 
         created_detail_text = {"detail": "Follow request sent"}
@@ -220,23 +219,40 @@ class FollowingListView(ListAPIView):
         return Response(serializer.data)
 
 
-    class FollowRequestView(APIView):
-        permission_classes = [permissions.IsAuthenticated]
+class FollowRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-        def post(self, request):
-            username = request.query_params.get("username")
-            target_user = get_object_or_404(User, username=username)
+    def post(self, request):
+        username = request.query_params.get("username")
+        target_user = get_object_or_404(User, username=username)
 
-            if request.user == target_user:
-                error_request_yourself = {"error": "you cannot send follow request to yourself"}
-                return Response(error_request_yourself, status=status.HTTP_400_BAD_REQUEST)
+        if request.user == target_user:
+            error_request_yourself = {"error": "you cannot send follow request to yourself"}
+            return Response(error_request_yourself, status=status.HTTP_400_BAD_REQUEST)
 
-            already_requested = FollowRequest.objects.filter(from_user=request.user, to_user=target_user).first()
-            if already_requested:
-                error_already_requested = {"error": "follow request already sent"}
-                return Response(error_already_requested, status=status.HTTP_400_BAD_REQUEST)
+        already_requested = FollowRequest.objects.filter(from_user=request.user, to_user=target_user).first()
+        if already_requested:
+            error_already_requested = {"error": "follow request already sent"}
+            return Response(error_already_requested, status=status.HTTP_400_BAD_REQUEST)
 
-            FollowRequest.objects.create(from_user=request.user, to_user=target_user, )
-            detail_request_sent = {"detail": "follow request sent"}
-            return Response(detail_request_sent, status=status.HTTP_201_CREATED)
+        FollowRequest.objects.create(from_user=request.user, to_user=target_user, )
+        detail_request_sent = {"detail": "follow request sent"}
+        return Response(detail_request_sent, status=status.HTTP_201_CREATED)
 
+
+class UserFollowersCountView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        username = request.query_params.get("username")
+        target_user = validator_target_user(username)
+        followers_count = Follow.objects.filter(following=target_user).count()
+
+        data = {
+            "username": target_user.username,
+            "followers_count": followers_count
+        }
+
+        serializer = FollowersCountSerializer(data)
+        return Response(serializer.data)

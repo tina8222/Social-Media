@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import UserProfile, Follow
+from .models import UserProfile, Follow, RestrictUser
 
 User = get_user_model()
 
@@ -107,3 +107,11 @@ class FollowersCountSerializer(serializers.Serializer):
 class  FollowingCountSerializer(serializers.Serializer):
     username = serializers.CharField()
     following_count = serializers.IntegerField(default=0)
+
+class RestrictUserSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source="user.username")
+    restricted_user = serializers.CharField(source="restricted_user.username")
+
+    class Meta:
+        model = RestrictUser
+        fields = ["user", "restricted_user"]

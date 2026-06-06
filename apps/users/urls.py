@@ -12,7 +12,8 @@ from .views import (
     FollowingListView,
     UserFollowersCountView,
     UserFollowingCountView,
-    RestrictUserView
+    RestrictUserView,
+    UnrestrictUserView
 )
 
 urlpatterns = [
@@ -31,4 +32,5 @@ urlpatterns = [
     path("followers-count/", UserFollowersCountView.as_view(), name="followers_count"),
     path("following-count/", UserFollowingCountView.as_view(), name="following_count"),
     path("restrict-user/", RestrictUserView.as_view(), name="restrict_user"),
+    path("unrestrict-user/", UnrestrictUserView.as_view(), name="unrestrict_user")
 ]

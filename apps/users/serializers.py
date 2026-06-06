@@ -98,3 +98,8 @@ class FollowingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ["username", "first_name", "last_name", "created_at"]
+
+
+class FollowersCountSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    followers_count = serializers.IntegerField()

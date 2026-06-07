@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.db.models import F
+from rest_framework.response import Response
 
 from .models import Like
 from apps.post.models import Post
@@ -15,3 +16,13 @@ def like_post(*, user, post_id:int):
         raise ValueError("you already liked this post")
 
     Post.objects.filter(id=post.id).update(likes_count=F("likes_count") + 1)
+
+
+@transaction.atomic
+def unlike_post(*, user, post_id:int):
+    post = get_post_by_id(post_id)
+
+    like = Like.objects.get(user=user, post=post)
+    if like:
+        like.delete()
+        Post.objects.filter(id=post.id).update(likes_count=F("likes_count") - 1)

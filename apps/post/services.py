@@ -146,3 +146,15 @@ def update_post(
         PostMedia.objects.bulk_create(media_objects)
 
     return post
+
+
+
+@transaction.atomic
+def delete_post(*, post):
+
+    for media in post.media.all():
+
+        if media.file:
+            media.file.delete(save=False)
+
+    post.delete()

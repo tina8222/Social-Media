@@ -4,15 +4,15 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .selectors import get_post_by_id_for_owner
+from .selectors import get_post_by_id_for_owner , get_post_by_id , get_user_posts, get_posts
 
 from .serializers import (
     CreatePostSerializer,
     PostSerializer,
     UpdatePostSerializer,
 )
-from .services import (create_post, update_post,)
-
+from .services import (create_post, update_post, delete_post,)
+from .pagination import PostPagination
 
 class CreatePostView(APIView):
 
@@ -55,3 +55,62 @@ class UpdatePostView(APIView):
         )
 
         return Response(PostSerializer(post).data,status=status.HTTP_200_OK)
+
+class DeletePostView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, post_id):
+
+        post = get_post_by_id_for_owner(post_id=post_id,owner=request.user)
+
+        delete_post(post=post)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class PostDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self,request,post_id):
+        post = get_post_by_id(post_id=post_id)
+
+        serializer = PostSerializer(post)
+
+        return Response(serializer.data,status=status.HTTP_200_OK)
+
+class MyPostsView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+
+        ordering = request.query_params.get("ordering","newest")
+
+        posts = get_user_posts(owner=request.user,ordering=ordering)
+
+        paginator = PostPagination()
+
+        page = paginator.paginate_queryset(posts,request)
+
+        serializer = PostSerializer(page,many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+class PostListView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+
+        ordering = request.query_params.get("ordering","newest")
+        owner_id = request.query_params.get("owner_id")
+
+        posts = get_posts(ordering=ordering, owner_id=owner_id)
+
+        paginator = PostPagination()
+
+        page = paginator.paginate_queryset(posts,request)
+
+        serializer = PostSerializer(page,many=True)
+
+        return paginator.get_paginated_response(serializer.data)

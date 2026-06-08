@@ -38,8 +38,13 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'apps.users.apps.UsersConfig',
     'apps.post.apps.PostConfig',
+<<<<<<< HEAD
     'apps.like.apps.LikeConfig',
     'drf_spectacular',
+=======
+    'apps.comment.apps.CommentConfig',
+
+>>>>>>> origin/main
 ]
 
 MIDDLEWARE = [

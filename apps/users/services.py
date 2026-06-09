@@ -3,8 +3,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.db import transaction
 
-from .models import User
-from .selectors import get_user_by_email_or_username, get_user_profile
+from .models import User, Follow
+from .selectors import get_user_by_email_or_username, get_user_profile, get_follow
 
 
 def register_user(*, validated_data:dict):
@@ -63,3 +63,27 @@ def check_user_profile(*, username):
     if not user:
         raise ValueError(f"user with username {username} dos not exist!")
     return user
+
+@transaction.atomic
+def follow_user(*, user, target_username):
+    if not target_username:
+        error = {"error": "username is required"}
+        return error
+
+    target_user = get_user_by_email_or_username(target_username)
+    if target_user == user:
+        error = {"error": "you cannot follow yourself"}
+        return error
+
+    already_follow = get_follow(follower=user, following=target_user)
+    if already_follow:
+        error = {"error": "you already follow this user"}
+        return error
+
+    Follow.objects.create(follower=user, following=target_user, status=Follow.FollowStatus.ACCEPTED)
+    data = {"detail": f"you're now following {target_username}"}
+    return data
+
+
+
+

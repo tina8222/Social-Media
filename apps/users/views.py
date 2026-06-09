@@ -8,8 +8,8 @@ from rest_framework.generics import ListAPIView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
-from .services import register_user, login_user, logout_user
-
+from .services import *
+from .selectors import get_user_profile
 from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
 from .paginations import FollowListPaginations, RestrictedUsersListPagination
@@ -60,27 +60,25 @@ class LogoutView(APIView):
         serializer.is_valid(raise_exception=True)
         logout = logout_user(validated_data=serializer.validated_data)
         return Response(logout, status=status.HTTP_200_OK)
-        
+
 
 class MyProfileView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def get(self, request):
-        serializer = ProfileSerializer(request.user.user_profile)
+        my_profile = get_user_profile(user=request.user)
+        serializer = ProfileSerializer(my_profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UpdateProfileView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def put(self, request):
-        profile = request.user.user_profile
+        profile = get_user_profile(user=request.user)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        profile = update_profile(profile=profile, validated_data=serializer.validated_data)
 
-        return Response(request.data, status=status.HTTP_200_OK)
+        updated_serializer = ProfileSerializer(profile)
+        return Response(updated_serializer.data, status=status.HTTP_200_OK)
 
 
 class ProfileView(APIView):

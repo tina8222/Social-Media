@@ -29,7 +29,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["bio", "avatar", "gender", "birth_date", "location", "username"]
+        fields = ["username", "bio", "avatar", "gender", "birth_date", "location"]
 
 
     def update(self, instance, validated_data):

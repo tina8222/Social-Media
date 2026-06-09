@@ -1,6 +1,8 @@
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.db import transaction
+
 from .models import User
 from .selectors import get_user_by_email_or_username
 
@@ -40,3 +42,16 @@ def logout_user(*, validated_data:dict):
     except Exception:
         data = {"detail": "Invalid refresh token"}
         return data
+
+@transaction.atomic
+def update_profile(*, profile, validated_data):
+    user_data = validated_data.pop("user", None)
+    if user_data:
+        profile.user.username = user_data["username"]
+        profile.user.save(update_fields=["username"])
+
+    for field, value in validated_data.items():
+        setattr(profile, field, value)
+
+    profile.save()
+    return profile

@@ -8,7 +8,7 @@ from rest_framework.generics import ListAPIView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
-from .services import register_user
+from .services import register_user, login_user
 
 from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
@@ -43,40 +43,14 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
-
     permission_classes = [AllowAny,]
-
     def post(self, request):
-
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        login = login_user(validated_data=serializer.validated_data)
+        return Response(login, status=status.HTTP_200_OK)
 
-        login = serializer.validated_data["login"]
-        password = serializer.validated_data["password"]
 
-        user = (
-            User.objects.filter(email=login).first()
-            or User.objects.filter(username=login).first()
-        )
-
-        if user is None or not user.check_password(password):
-
-            return Response(
-                {
-                    "detail": "Invalid credentials"
-                },
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-            },
-            status=status.HTTP_200_OK,
-        )
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated,]

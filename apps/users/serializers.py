@@ -16,13 +16,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-
     login = serializers.CharField(required=True)
-
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-    )
+    password = serializers.CharField(write_only=True, required=True,)
 
 
 class LogoutSerializer(serializers.Serializer):

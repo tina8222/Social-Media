@@ -28,3 +28,15 @@ def login_user(*, validated_data:dict):
         "access": str(refresh.access_token),
     }
     return data
+
+
+def logout_user(*, validated_data:dict):
+    try:
+        token = RefreshToken(validated_data["refresh"])
+        token.blacklist()
+        data = {"detail": "Logged out successfully"}
+        return data
+
+    except Exception:
+        data = {"detail": "Invalid refresh token"}
+        return data

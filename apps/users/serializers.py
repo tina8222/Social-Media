@@ -24,7 +24,6 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
 
-
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", required=False)
 

@@ -8,7 +8,7 @@ from rest_framework.generics import ListAPIView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
-from .services import register_user, login_user
+from .services import register_user, login_user, logout_user
 
 from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
@@ -58,25 +58,9 @@ class LogoutView(APIView):
     def post(self,request):
         serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-
-        try:
-            token = RefreshToken(serializer.validated_data["refresh"])
-            token.blacklist()
-            return Response(
-                {
-                    "detail": "Logged out successfully"
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except Exception:
-            return Response(
-                {
-                    "detail":"Invalid refresh token"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        logout = logout_user(validated_data=serializer.validated_data)
+        return Response(logout, status=status.HTTP_200_OK)
+        
 
 class MyProfileView(APIView):
 

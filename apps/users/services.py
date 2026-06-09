@@ -85,5 +85,18 @@ def follow_user(*, user, target_username):
     return data
 
 
+@transaction.atomic
+def unfollow_user(*, user, target_username):
+    if not target_username:
+        error = {"error": "username is required"}
+        return error
 
+    target_user = get_user_by_email_or_username(target_username)
+    follow_obj = get_follow(follower=user, following=target_user)
+    if not follow_obj:
+        error = {"error": "you are not following this user"}
+        return error
 
+    follow_obj.delete()
+    detail = {"detail": f"you unfollowed user {target_username}"}
+    return detail

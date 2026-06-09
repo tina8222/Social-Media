@@ -99,28 +99,11 @@ class FollowUserView(APIView):
 
 
 class UnfollowUserView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def delete(self, request):
         username = request.query_params.get("username")
-        if not username:
-            error_username_required = {"error": "username is required"}
-            return Response(error_username_required, status=status.HTTP_400_BAD_REQUEST)
-
-        target_user = validator_target_user(username)
-
-        following = Follow.objects.filter(follower=request.user, following=target_user).first()
-        request_follow = FollowRequest.objects.filter(from_user=request.user, to_user=target_user)
-
-        if not following:
-            error_not_follow = {"error": "you are not following this user"}
-            return Response(error_not_follow, status=status.HTTP_400_BAD_REQUEST)
-
-        request_follow.delete()
-        following.delete()
-        delete_detail = {"detail": "success"}
-        return Response(delete_detail, status=status.HTTP_200_OK)
+        unfollow = unfollow_user(user=request.user, target_username=username)
+        return Response(unfollow, status=status.HTTP_200_OK)
 
 
 class FollowersListView(ListAPIView):

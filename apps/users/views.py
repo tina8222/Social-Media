@@ -2,14 +2,13 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.generics import ListAPIView
 
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
 from .services import *
-from .selectors import get_my_profile, get_followers_list
+from .selectors import get_my_profile, get_followers_list, get_following_list
 from .models import Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
 from .paginations import FollowListPaginations, RestrictedUsersListPagination
@@ -122,7 +121,9 @@ class FollowingListView(ListAPIView):
     permission_classes = [IsAuthenticated,]
 
     def get(self, request):
-        users = Follow.objects.filter(follower=request.user).select_related("following").order_by("-created_at")
+        username = request.query_params.get("username")
+        user = get_user_by_email_or_username(username)
+        users = get_following_list(user=user)
         serializer = FollowingListSerializer(instance=users, many=True)
         return Response(serializer.data)
 

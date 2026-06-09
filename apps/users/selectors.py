@@ -20,3 +20,8 @@ def get_follow(*, follower, following):
 
 def get_followers_list(*, user):
     return Follow.objects.filter(following=user).select_related("follower").order_by("-created_at")
+
+def get_following_list(*, user):
+    return Follow.objects.filter(follower=user).select_related("following").order_by("-created_at")
+
+

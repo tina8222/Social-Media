@@ -17,3 +17,6 @@ def get_user_profile(*, username):
 
 def get_follow(*, follower, following):
     return Follow.objects.filter(follower=follower, following=following).first()
+
+def get_followers_list(*, user):
+    return Follow.objects.filter(following=user).select_related("follower").order_by("-created_at")

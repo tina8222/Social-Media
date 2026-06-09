@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
 from .services import *
-from .selectors import get_my_profile
+from .selectors import get_my_profile, get_followers_list
 from .models import Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
 from .paginations import FollowListPaginations, RestrictedUsersListPagination
@@ -82,7 +82,7 @@ class UpdateProfileView(APIView):
 
 
 class ProfileView(APIView):
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
         username = request.GET.get("username")
         profile = check_user_profile(username=username)
@@ -109,9 +109,10 @@ class UnfollowUserView(APIView):
 class FollowersListView(ListAPIView):
     pagination_class = FollowListPaginations
     permission_classes = [IsAuthenticated,]
-
     def get(self, request):
-        users = Follow.objects.filter(following=request.user).select_related("follower").order_by("-created_at")
+        username = request.query_params.get("username")
+        user = get_user_by_email_or_username(username)
+        users = get_followers_list(user=user)
         serializer = FollowersListSerializer(instance=users, many=True)
         return Response(serializer.data)
 

@@ -32,16 +32,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ["username", "bio", "avatar", "gender", "birth_date", "location"]
 
 
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-
-        if user_data:
-            instance.user.username = user_data["username"]
-            instance.user.save()
-
-        return super().update(instance, validated_data)
-
-
 class FollowersListSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="follower.username")
     first_name = serializers.CharField(source="follower.first_name")

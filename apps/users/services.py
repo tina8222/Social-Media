@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 
 from .models import User
-from .selectors import get_user_by_email_or_username
+from .selectors import get_user_by_email_or_username, get_user_profile
 
 
 def register_user(*, validated_data:dict):
@@ -55,3 +55,11 @@ def update_profile(*, profile, validated_data):
 
     profile.save()
     return profile
+
+
+@transaction.atomic
+def check_user_profile(*, username):
+    user = get_user_profile(username=username)
+    if not user:
+        raise ValueError(f"user with username {username} dos not exist!")
+    return user

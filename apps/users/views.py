@@ -9,8 +9,8 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
 from .services import *
-from .selectors import get_user_profile
-from .models import UserProfile, Follow, FollowRequest, RestrictUser
+from .selectors import get_my_profile
+from .models import Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
 from .paginations import FollowListPaginations, RestrictedUsersListPagination
 from .serializers import (
@@ -51,7 +51,6 @@ class LoginView(APIView):
         return Response(login, status=status.HTTP_200_OK)
 
 
-
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated,]
 
@@ -65,14 +64,15 @@ class LogoutView(APIView):
 class MyProfileView(APIView):
     permission_classes = [IsAuthenticated,]
     def get(self, request):
-        my_profile = get_user_profile(user=request.user)
+        my_profile = get_my_profile(user=request.user)
         serializer = ProfileSerializer(my_profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated,]
     def put(self, request):
-        profile = get_user_profile(user=request.user)
+        profile = get_my_profile(user=request.user)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         profile = update_profile(profile=profile, validated_data=serializer.validated_data)
@@ -85,11 +85,9 @@ class ProfileView(APIView):
 
     def get(self, request):
         username = request.GET.get("username")
-        profile = get_object_or_404(UserProfile, user__username=username)
+        profile = check_user_profile(username=username)
         serilizer = ProfileSerializer(instance=profile)
-        if serilizer:
-            return Response(serilizer.data, status=status.HTTP_200_OK)
-        return Response(serilizer.data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serilizer.data, status=status.HTTP_200_OK)
 
 
 class FollowUserView(APIView):

@@ -1,14 +1,18 @@
-from django.contrib.auth import get_user_model
-from rest_framework import permissions, status
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.generics import ListAPIView
+
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+
+from .services import register_user
+
 from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
 from .paginations import FollowListPaginations, RestrictedUsersListPagination
-
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
@@ -25,29 +29,22 @@ from .serializers import (
 User = get_user_model()
 
 class RegisterView(APIView):
-
-    permission_classes = [permissions.AllowAny]
-
+    permission_classes = [AllowAny,]
     def post(self, request):
-
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        register = register_user(validated_data=serializer.validated_data)
 
-        user = serializer.save()
+        response = {
+            "access": register["access"],
+            "refresh": register["refresh"]
+        }
+        return Response(response, status=status.HTTP_201_CREATED)
 
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-            },
-            status=status.HTTP_201_CREATED,
-        )
 
 class LoginView(APIView):
 
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny,]
 
     def post(self, request):
 
@@ -82,7 +79,7 @@ class LoginView(APIView):
         )
 
 class LogoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def post(self,request):
         serializer = LogoutSerializer(data=request.data)
@@ -109,7 +106,7 @@ class LogoutView(APIView):
 
 class MyProfileView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
         serializer = ProfileSerializer(request.user.user_profile)
@@ -117,7 +114,7 @@ class MyProfileView(APIView):
 
 class UpdateProfileView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def put(self, request):
         profile = request.user.user_profile
@@ -141,7 +138,7 @@ class ProfileView(APIView):
 
 class FollowUserView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def post(self, request):
         username = request.query_params.get("username")
@@ -172,7 +169,7 @@ class FollowUserView(APIView):
 
 class UnfollowUserView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def delete(self, request):
         username = request.query_params.get("username")
@@ -197,7 +194,7 @@ class UnfollowUserView(APIView):
 
 class FollowersListView(ListAPIView):
     pagination_class = FollowListPaginations
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
         users = Follow.objects.filter(following=request.user).select_related("follower").order_by("-created_at")
@@ -207,7 +204,7 @@ class FollowersListView(ListAPIView):
 
 class FollowingListView(ListAPIView):
     pagination_class = FollowListPaginations
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
         users = Follow.objects.filter(follower=request.user).select_related("following").order_by("-created_at")
@@ -216,7 +213,7 @@ class FollowingListView(ListAPIView):
 
 
 class FollowRequestView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def post(self, request):
         username = request.query_params.get("username")
@@ -238,7 +235,7 @@ class FollowRequestView(APIView):
 
 class UserFollowersCountView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
         username = request.query_params.get("username")
@@ -256,7 +253,7 @@ class UserFollowersCountView(APIView):
 
 class UserFollowingCountView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
         username = request.query_params.get("username")
@@ -274,7 +271,7 @@ class UserFollowingCountView(APIView):
 
 class RestrictUserView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def post(self, request):
         username = request.query_params.get("username")
@@ -295,7 +292,7 @@ class RestrictUserView(APIView):
 
 class UnrestrictUserView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def delete(self, request):
         username = request.query_params.get("username")
@@ -309,7 +306,7 @@ class UnrestrictUserView(APIView):
 
 class RestrictedUsersListView(ListAPIView):
     pagination_class = RestrictedUsersListPagination
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
         restricted_users = RestrictUser.objects.filter(user=request.user)

@@ -119,7 +119,6 @@ class FollowersListView(ListAPIView):
 class FollowingListView(ListAPIView):
     pagination_class = FollowListPaginations
     permission_classes = [IsAuthenticated,]
-
     def get(self, request):
         username = request.query_params.get("username")
         user = get_user_by_email_or_username(username)
@@ -150,38 +149,20 @@ class FollowRequestView(APIView):
 
 
 class UserFollowersCountView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def get(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        followers_count = Follow.objects.filter(following=target_user).count()
-
-        data = {
-            "username": target_user.username,
-            "followers_count": followers_count
-        }
-
-        serializer = FollowersCountSerializer(data)
+        followers = followers_count(target_username=username)
+        serializer = FollowersCountSerializer(followers)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserFollowingCountView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def get(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        following_count = Follow.objects.filter(follower=target_user).count()
-
-        data = {
-            "username": target_user.username,
-            "following_count": following_count
-        }
-
-        serializer = FollowingCountSerializer(data)
+        following = following_count(target_username=username)
+        serializer = FollowingCountSerializer(following)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -4,7 +4,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 
 from .models import User, Follow
-from .selectors import get_user_by_email_or_username, get_user_profile, get_follow
+from .selectors import (get_user_by_email_or_username,get_user_profile, get_follow,
+                        get_followers_count, get_following_count,
+)
 
 
 def register_user(*, validated_data:dict):
@@ -100,3 +102,31 @@ def unfollow_user(*, user, target_username):
     follow_obj.delete()
     detail = {"detail": f"you unfollowed user {target_username}"}
     return detail
+
+
+@transaction.atomic
+def followers_count(*, target_username):
+    target_user = get_user_by_email_or_username(target_username)
+    followers = get_followers_count(following=target_user)
+    data = {
+        "username": target_user.username,
+        "followers_count": followers
+    }
+    return data
+
+def following_count(*, target_username):
+    target_user = get_user_by_email_or_username(target_username)
+    following = get_following_count(follower=target_user)
+    data = {
+        "username": target_user.username,
+        "following_count": following
+    }
+    return data
+
+def restrict_user(*, user, target_username):
+    target_user = get_user_by_email_or_username(target_username)
+    if user == target_user:
+        data = {"error": "you cannot restrict yourself"}
+        return data
+
+

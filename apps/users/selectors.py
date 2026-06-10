@@ -24,4 +24,8 @@ def get_followers_list(*, user):
 def get_following_list(*, user):
     return Follow.objects.filter(follower=user).select_related("following").order_by("-created_at")
 
+def get_followers_count(*, following):
+    return Follow.objects.filter(following=following).count()
 
+def get_following_count(*, follower):
+    return Follow.objects.filter(follower=follower).count()

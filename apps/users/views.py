@@ -7,8 +7,9 @@ from rest_framework.generics import ListAPIView
 from django.shortcuts import get_object_or_404
 from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from .validators import validator_target_user
-from .paginations import FollowListPaginations, RestrictedUsersListPagination
-
+from .paginations import FollowListPaginations, RestrictedUsersListPagination , BlockedUsersListPagination
+from .services import block_user , unblock_user , remove_blocked_users
+from .selectors import get_blocked_users
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
@@ -19,6 +20,8 @@ from .serializers import (
     FollowersCountSerializer,
     FollowingCountSerializer,
     RestrictUserSerializer,
+    BlockUserSerializer,
+    
 )
 
 
@@ -322,3 +325,81 @@ class RestrictedUsersListView(ListAPIView):
         deleted, _ = RestrictUser.objects.filter(user=request.user, restricted_user__username__in=usernames).delete()
         deleted_text_detail = {"detail": "selected users unrestricted"}
         return Response(deleted_text_detail, status=status.HTTP_200_OK)
+
+
+
+
+
+class BlockUserView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+
+        username = request.query_params.get("username")
+        target_user = validator_target_user(username)
+
+        block = block_user(blocker=request.user,blocked=target_user)
+
+        serializer = BlockUserSerializer(instance=block)
+
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+
+class UnblockUserView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request):
+        username = request.query_params.get("username")
+
+        target_user = validator_target_user(username)
+
+        unblock_user(blocker=request.user,blocked=target_user)
+
+        return Response(
+            {
+                "detail": (f"{target_user.username} ""unblocked successfully")
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class BlockedUsersListView(ListAPIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = BlockedUsersListPagination
+
+    def get(self, request):
+        blocked_users = get_blocked_users(request.user)
+
+        page = self.paginate_queryset(blocked_users)
+
+        serializer = BlockUserSerializer(instance=page,many=True)
+
+        return self.get_paginated_response(serializer.data)
+
+    def delete(self, request):
+        usernames = request.query_params.getlist("username")
+
+        if not usernames:
+            return Response(
+                {
+                    "error": (
+                        "at least one username "
+                        "is required"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        remove_blocked_users(blocker=request.user,usernames=usernames)
+
+        return Response(
+            {
+                "detail": (
+                    "selected users "
+                    "unblocked successfully"
+                )
+            },
+            status=status.HTTP_200_OK,
+        )

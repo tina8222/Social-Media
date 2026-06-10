@@ -6,3 +6,6 @@ class FollowListPaginations(PageNumberPagination):
 
 class RestrictedUsersListPagination(PageNumberPagination):
     page_size = 15
+
+class BlockedUsersListPagination(PageNumberPagination):
+    page_size = 15

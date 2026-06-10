@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import UserProfile, Follow, RestrictUser
+from .models import UserProfile, Follow, RestrictUser, BlockUser
 
 User = get_user_model()
 
@@ -117,3 +117,10 @@ class RestrictUserSerializer(serializers.ModelSerializer):
         fields = ["restricted_user_username", "restricted_user_email"]
 
 
+class BlockUserSerializer(serializers.ModelSerializer):
+    blocked_username = serializers.CharField(source="blocked.username",read_only=True)
+    blocked_email = serializers.EmailField(source="blocked.email",read_only=True)
+
+    class Meta:
+        model = BlockUser
+        fields = ("blocked_username","blocked_email","created_at")

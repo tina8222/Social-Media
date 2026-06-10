@@ -21,7 +21,6 @@ from .serializers import (
     FollowingListSerializer,
     FollowersCountSerializer,
     FollowingCountSerializer,
-    RestrictUserSerializer,
 )
 
 
@@ -161,44 +160,26 @@ class UserFollowingCountView(APIView):
     permission_classes = [IsAuthenticated,]
     def get(self, request):
         username = request.query_params.get("username")
-        following = following_count(target_username=username)
-        serializer = FollowingCountSerializer(following)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = following_count(target_username=username)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class RestrictUserView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def post(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        if target_user == request.user:
-            error_cannot_restrict_yourself = {"error": "you cannot restrict yourself"}
-            return Response(error_cannot_restrict_yourself, status=status.HTTP_400_BAD_REQUEST)
-
-        restrict_user_obj, created = RestrictUser.objects.get_or_create(user=request.user, restricted_user=target_user)
-        if created == False:
-            error_restricted_before = {"error": "you restricted this user before"}
-            return Response(error_restricted_before, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = RestrictUserSerializer(instance=restrict_user_obj)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        data = restrict_user(user=request.user, target_username=username)
+        return Response(data)
         # comments get restrict
         # have restricted activity
 
+
 class UnrestrictUserView(APIView):
-
     permission_classes = [IsAuthenticated,]
-
     def delete(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        restrict_query = RestrictUser.objects.get(user=request.user, restricted_user=target_user)
-        if restrict_query:
-            restrict_query.delete()
-            message = {"detail": f"{target_user.username} unrestricted!"}
-            return Response(message, status=status.HTTP_200_OK)
+        data = unrestrict_user(user=request.user, target_username=username)
+        return Response(data)
 
 
 class RestrictedUsersListView(ListAPIView):

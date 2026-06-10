@@ -3,9 +3,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.db import transaction
 
-from .models import User, Follow
+from .models import User, Follow, RestrictUser
 from .selectors import (get_user_by_email_or_username,get_user_profile, get_follow,
-                        get_followers_count, get_following_count,
+                        get_followers_count, get_following_count, get_restrict_user
 )
 
 
@@ -128,5 +128,32 @@ def restrict_user(*, user, target_username):
     if user == target_user:
         data = {"error": "you cannot restrict yourself"}
         return data
+
+    restrict_user_obj, created = RestrictUser.objects.get_or_create(user=user, restricted_user=target_user)
+    if created == False:
+        data = {"error": "you restricted this user before"}
+        return data
+
+    data = {
+        "detail": f"you restricted {target_username}",
+    }
+    return data
+
+
+def unrestrict_user(*, user, target_username):
+    target_user = get_user_by_email_or_username(target_username)
+    obj = get_restrict_user(user=user, restricted_user=target_user)
+    if not obj:
+        data = {
+            "error": f"you're not restrict {target_username}"
+        }
+        return data
+
+    obj.delete()
+    data = {
+        f"{target_username} unrestricted"
+    }
+    return data
+
 
 

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 
-from .models import UserProfile, Follow
+from .models import UserProfile, Follow, RestrictUser
 
 User = get_user_model()
 def get_user_by_email_or_username(value):
@@ -29,3 +29,7 @@ def get_followers_count(*, following):
 
 def get_following_count(*, follower):
     return Follow.objects.filter(follower=follower).count()
+
+def get_restrict_user(*, user, restricted_user):
+    return RestrictUser.objects.filter(user=user, restricted_user=restricted_user)
+

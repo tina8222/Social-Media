@@ -53,14 +53,6 @@ class FollowingListSerializer(serializers.ModelSerializer):
         fields = ["username", "first_name", "last_name", "created_at"]
 
 
-class FollowersCountSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    followers_count = serializers.IntegerField(default=0)
-
-class  FollowingCountSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    following_count = serializers.IntegerField(default=0)
-
 class RestrictUserSerializer(serializers.ModelSerializer):
     restricted_user_username = serializers.CharField(source="restricted_user.username", read_only=True)
     restricted_user_email = serializers.EmailField(source="restricted_user.email", read_only=True)

@@ -8,9 +8,8 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
 from .services import *
-from .selectors import get_my_profile, get_followers_list, get_following_list
-from .models import Follow, FollowRequest, RestrictUser
-from .validators import validator_target_user
+from .selectors import get_my_profile, get_followers_list, get_following_list, get_restricted_users
+from .models import FollowRequest
 from .paginations import FollowListPaginations, RestrictedUsersListPagination
 from .serializers import (
     RegisterSerializer,
@@ -19,8 +18,7 @@ from .serializers import (
     ProfileSerializer,
     FollowersListSerializer,
     FollowingListSerializer,
-    FollowersCountSerializer,
-    FollowingCountSerializer,
+    RestrictUserSerializer
 )
 
 
@@ -151,9 +149,8 @@ class UserFollowersCountView(APIView):
     permission_classes = [IsAuthenticated,]
     def get(self, request):
         username = request.query_params.get("username")
-        followers = followers_count(target_username=username)
-        serializer = FollowersCountSerializer(followers)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = followers_count(target_username=username)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class UserFollowingCountView(APIView):
@@ -185,15 +182,12 @@ class UnrestrictUserView(APIView):
 class RestrictedUsersListView(ListAPIView):
     pagination_class = RestrictedUsersListPagination
     permission_classes = [IsAuthenticated,]
-
     def get(self, request):
-        restricted_users = RestrictUser.objects.filter(user=request.user)
-        serializer = RestrictUserSerializer(instance=restricted_users, many=True)
+        users = get_restricted_users(user=request.user)
+        serializer = RestrictUserSerializer(instance=users, many=True)
         return Response(serializer.data)
 
     def delete(self, request):
-        restricted_users = RestrictUser.objects.filter(user=request.user)
         usernames = request.query_params.getlist("username")
-        deleted, _ = RestrictUser.objects.filter(user=request.user, restricted_user__username__in=usernames).delete()
-        deleted_text_detail = {"detail": "selected users unrestricted"}
-        return Response(deleted_text_detail, status=status.HTTP_200_OK)
+        data = unrestrict_selected_users(user=request.user, usernames=usernames)
+        return Response(data, status=status.HTTP_200_OK)

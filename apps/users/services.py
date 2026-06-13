@@ -5,7 +5,8 @@ from django.db import transaction
 
 from .models import User, Follow, RestrictUser
 from .selectors import (get_user_by_email_or_username,get_user_profile, get_follow,
-                        get_followers_count, get_following_count, get_restrict_user
+                        get_followers_count, get_following_count, get_restrict_user,
+                        get_restricted_users
 )
 
 
@@ -114,6 +115,7 @@ def followers_count(*, target_username):
     }
     return data
 
+@transaction.atomic
 def following_count(*, target_username):
     target_user = get_user_by_email_or_username(target_username)
     following = get_following_count(follower=target_user)
@@ -123,6 +125,8 @@ def following_count(*, target_username):
     }
     return data
 
+
+@transaction.atomic
 def restrict_user(*, user, target_username):
     target_user = get_user_by_email_or_username(target_username)
     if user == target_user:
@@ -140,6 +144,7 @@ def restrict_user(*, user, target_username):
     return data
 
 
+@transaction.atomic
 def unrestrict_user(*, user, target_username):
     target_user = get_user_by_email_or_username(target_username)
     obj = get_restrict_user(user=user, restricted_user=target_user)
@@ -156,4 +161,11 @@ def unrestrict_user(*, user, target_username):
     return data
 
 
-
+@transaction.atomic
+def unrestrict_selected_users(*, usernames, user):
+    users = get_restricted_users(user=user)
+    deleted, _ = RestrictUser.objects.filter(user=user, restricted_user__username__in=usernames).delete()
+    data = {
+        "detail": "selected users unrestricted"
+    }
+    return data

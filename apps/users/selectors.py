@@ -31,5 +31,7 @@ def get_following_count(*, follower):
     return Follow.objects.filter(follower=follower).count()
 
 def get_restrict_user(*, user, restricted_user):
-    return RestrictUser.objects.filter(user=user, restricted_user=restricted_user)
+    return RestrictUser.objects.filter(user=user, restricted_user=restricted_user).first()
 
+def get_restricted_users(*, user):
+    return RestrictUser.objects.filter(user=user)

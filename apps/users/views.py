@@ -1,14 +1,16 @@
-from django.contrib.auth import get_user_model
-from rest_framework import permissions, status
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.generics import ListAPIView
-from django.shortcuts import get_object_or_404
-from .models import UserProfile, Follow, FollowRequest, RestrictUser
-from .validators import validator_target_user
-from .paginations import FollowListPaginations, RestrictedUsersListPagination
 
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+
+from .services import *
+from .selectors import get_my_profile, get_followers_list, get_following_list, get_restricted_users
+from .models import FollowRequest
+from .paginations import FollowListPaginations, RestrictedUsersListPagination
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
@@ -16,207 +18,114 @@ from .serializers import (
     ProfileSerializer,
     FollowersListSerializer,
     FollowingListSerializer,
-    FollowersCountSerializer,
-    FollowingCountSerializer,
-    RestrictUserSerializer,
+    RestrictUserSerializer
 )
 
 
 User = get_user_model()
 
 class RegisterView(APIView):
-
-    permission_classes = [permissions.AllowAny]
-
+    permission_classes = [AllowAny,]
     def post(self, request):
-
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        register = register_user(validated_data=serializer.validated_data)
 
-        user = serializer.save()
+        response = {
+            "access": register["access"],
+            "refresh": register["refresh"]
+        }
+        return Response(response, status=status.HTTP_201_CREATED)
 
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-            },
-            status=status.HTTP_201_CREATED,
-        )
 
 class LoginView(APIView):
-
-    permission_classes = [permissions.AllowAny]
-
+    permission_classes = [AllowAny,]
     def post(self, request):
-
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        login = login_user(validated_data=serializer.validated_data)
+        return Response(login, status=status.HTTP_200_OK)
 
-        login = serializer.validated_data["login"]
-        password = serializer.validated_data["password"]
-
-        user = (
-            User.objects.filter(email=login).first()
-            or User.objects.filter(username=login).first()
-        )
-
-        if user is None or not user.check_password(password):
-
-            return Response(
-                {
-                    "detail": "Invalid credentials"
-                },
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-            },
-            status=status.HTTP_200_OK,
-        )
 
 class LogoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def post(self,request):
         serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        logout = logout_user(validated_data=serializer.validated_data)
+        return Response(logout, status=status.HTTP_200_OK)
 
-
-        try:
-            token = RefreshToken(serializer.validated_data["refresh"])
-            token.blacklist()
-            return Response(
-                {
-                    "detail": "Logged out successfully"
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except Exception:
-            return Response(
-                {
-                    "detail":"Invalid refresh token"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
 class MyProfileView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
-        serializer = ProfileSerializer(request.user.user_profile)
+        my_profile = get_my_profile(user=request.user)
+        serializer = ProfileSerializer(my_profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class UpdateProfileView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def put(self, request):
-        profile = request.user.user_profile
+        profile = get_my_profile(user=request.user)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        profile = update_profile(profile=profile, validated_data=serializer.validated_data)
 
-        return Response(request.data, status=status.HTTP_200_OK)
+        updated_serializer = ProfileSerializer(profile)
+        return Response(updated_serializer.data, status=status.HTTP_200_OK)
 
 
 class ProfileView(APIView):
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
         username = request.GET.get("username")
-        profile = get_object_or_404(UserProfile, user__username=username)
+        profile = check_user_profile(username=username)
         serilizer = ProfileSerializer(instance=profile)
-        if serilizer:
-            return Response(serilizer.data, status=status.HTTP_200_OK)
-        return Response(serilizer.data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serilizer.data, status=status.HTTP_200_OK)
 
 
 class FollowUserView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def post(self, request):
         username = request.query_params.get("username")
-        if not username:
-            error_username_required = {"error": "username is required"}
-            return Response(error_username_required, status=status.HTTP_400_BAD_REQUEST)
-
-        target_user = validator_target_user(username)
-        if request.user == target_user:
-            error_follow_yourself = {"error": "you cannot follow yourself"}
-            return Response(error_follow_yourself, status=status.HTTP_400_BAD_REQUEST)
-
-        already_follow = Follow.objects.filter(follower=request.user, following=target_user).first()
-        if already_follow:
-            error_already_follow = {"error": "you already follow this user"}
-            return Response(error_already_follow, status=status.HTTP_400_BAD_REQUEST)
-
-        already_requested = FollowRequest.objects.filter(from_user=request.user, to_user=target_user).first()
-        if already_requested:
-            error_already_requested = {"error": "follow request already sent"}
-            return Response(error_already_requested, status=status.HTTP_400_BAD_REQUEST)
-
-        Follow.objects.create(follower=request.user, following=target_user, status=Follow.FollowStatus.PENDING)
-
-        created_detail_text = {"detail": "Follow request sent"}
-        return Response(created_detail_text, status=status.HTTP_201_CREATED)
+        follow = follow_user(user=request.user, target_username=username)
+        return Response(follow, status=status.HTTP_201_CREATED)
 
 
 class UnfollowUserView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def delete(self, request):
         username = request.query_params.get("username")
-        if not username:
-            error_username_required = {"error": "username is required"}
-            return Response(error_username_required, status=status.HTTP_400_BAD_REQUEST)
-
-        target_user = validator_target_user(username)
-
-        following = Follow.objects.filter(follower=request.user, following=target_user).first()
-        request_follow = FollowRequest.objects.filter(from_user=request.user, to_user=target_user)
-
-        if not following:
-            error_not_follow = {"error": "you are not following this user"}
-            return Response(error_not_follow, status=status.HTTP_400_BAD_REQUEST)
-
-        request_follow.delete()
-        following.delete()
-        delete_detail = {"detail": "success"}
-        return Response(delete_detail, status=status.HTTP_200_OK)
+        unfollow = unfollow_user(user=request.user, target_username=username)
+        return Response(unfollow, status=status.HTTP_200_OK)
 
 
 class FollowersListView(ListAPIView):
     pagination_class = FollowListPaginations
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
-        users = Follow.objects.filter(following=request.user).select_related("follower").order_by("-created_at")
+        username = request.query_params.get("username")
+        user = get_user_by_email_or_username(username)
+        users = get_followers_list(user=user)
         serializer = FollowersListSerializer(instance=users, many=True)
         return Response(serializer.data)
 
 
 class FollowingListView(ListAPIView):
     pagination_class = FollowListPaginations
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
-        users = Follow.objects.filter(follower=request.user).select_related("following").order_by("-created_at")
+        username = request.query_params.get("username")
+        user = get_user_by_email_or_username(username)
+        users = get_following_list(user=user)
         serializer = FollowingListSerializer(instance=users, many=True)
         return Response(serializer.data)
 
 
 class FollowRequestView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated,]
 
     def post(self, request):
         username = request.query_params.get("username")
@@ -237,88 +146,48 @@ class FollowRequestView(APIView):
 
 
 class UserFollowersCountView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        followers_count = Follow.objects.filter(following=target_user).count()
-
-        data = {
-            "username": target_user.username,
-            "followers_count": followers_count
-        }
-
-        serializer = FollowersCountSerializer(data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = followers_count(target_username=username)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class UserFollowingCountView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        following_count = Follow.objects.filter(follower=target_user).count()
-
-        data = {
-            "username": target_user.username,
-            "following_count": following_count
-        }
-
-        serializer = FollowingCountSerializer(data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = following_count(target_username=username)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class RestrictUserView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def post(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        if target_user == request.user:
-            error_cannot_restrict_yourself = {"error": "you cannot restrict yourself"}
-            return Response(error_cannot_restrict_yourself, status=status.HTTP_400_BAD_REQUEST)
-
-        restrict_user_obj, created = RestrictUser.objects.get_or_create(user=request.user, restricted_user=target_user)
-        if created == False:
-            error_restricted_before = {"error": "you restricted this user before"}
-            return Response(error_restricted_before, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = RestrictUserSerializer(instance=restrict_user_obj)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        data = restrict_user(user=request.user, target_username=username)
+        return Response(data)
         # comments get restrict
         # have restricted activity
 
+
 class UnrestrictUserView(APIView):
-
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def delete(self, request):
         username = request.query_params.get("username")
-        target_user = validator_target_user(username)
-        restrict_query = RestrictUser.objects.get(user=request.user, restricted_user=target_user)
-        if restrict_query:
-            restrict_query.delete()
-            message = {"detail": f"{target_user.username} unrestricted!"}
-            return Response(message, status=status.HTTP_200_OK)
+        data = unrestrict_user(user=request.user, target_username=username)
+        return Response(data)
 
 
 class RestrictedUsersListView(ListAPIView):
     pagination_class = RestrictedUsersListPagination
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsAuthenticated,]
     def get(self, request):
-        restricted_users = RestrictUser.objects.filter(user=request.user)
-        serializer = RestrictUserSerializer(instance=restricted_users, many=True)
+        users = get_restricted_users(user=request.user)
+        serializer = RestrictUserSerializer(instance=users, many=True)
         return Response(serializer.data)
 
     def delete(self, request):
-        restricted_users = RestrictUser.objects.filter(user=request.user)
         usernames = request.query_params.getlist("username")
-        deleted, _ = RestrictUser.objects.filter(user=request.user, restricted_user__username__in=usernames).delete()
-        deleted_text_detail = {"detail": "selected users unrestricted"}
-        return Response(deleted_text_detail, status=status.HTTP_200_OK)
+        data = unrestrict_selected_users(user=request.user, usernames=usernames)
+        return Response(data, status=status.HTTP_200_OK)

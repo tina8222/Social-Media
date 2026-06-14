@@ -6,7 +6,8 @@ from .views import (
     PostDetailView,
     MyPostsView,
     PostListView,
-    ExploreView
+    ExploreView,
+    SavePostView
 )
 
 
@@ -18,5 +19,5 @@ path("<int:post_id>/", PostDetailView.as_view(),name="post_detail"),
 path("me/", MyPostsView.as_view(),name="my_post"),
 path("posts/", PostListView.as_view(),name="post-list"),
     path("explore/", ExploreView.as_view(), name="explore"),
-
+    path("save/", SavePostView.as_view(), name="save_post")
 ]

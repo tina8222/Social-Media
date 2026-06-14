@@ -158,3 +158,9 @@ def delete_post(*, post):
             media.file.delete(save=False)
 
     post.delete()
+
+
+
+@transaction.atomic
+def get_feed(*,user,ordering="newest"):
+    return get_feed_posts(user=user,ordering=ordering)

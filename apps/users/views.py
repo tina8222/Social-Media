@@ -196,7 +196,7 @@ class RestrictedUsersListView(ListAPIView):
 
 class BlockUserView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
@@ -212,7 +212,7 @@ class BlockUserView(APIView):
 
 class UnblockUserView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request):
         username = request.query_params.get("username")
@@ -230,7 +230,7 @@ class UnblockUserView(APIView):
 
 class BlockedUsersListView(ListAPIView):
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     pagination_class = BlockedUsersListPagination
 
     def get(self, request):

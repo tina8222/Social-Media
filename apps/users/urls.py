@@ -16,7 +16,10 @@ from .views import (
     UserFollowingCountView,
     RestrictUserView,
     UnrestrictUserView,
-    RestrictedUsersListView
+    RestrictedUsersListView,
+    BlockUserView,
+    UnblockUserView,
+    BlockedUsersListView,
 )
 
 urlpatterns = [
@@ -37,5 +40,11 @@ urlpatterns = [
     path("following-count/", UserFollowingCountView.as_view(), name="following_count"),
     path("restrict-user/", RestrictUserView.as_view(), name="restrict_user"),
     path("unrestrict-user/", UnrestrictUserView.as_view(), name="unrestrict_user"),
-    path("restricted-users/", RestrictedUsersListView.as_view(), name="restricted_users")
+    path("restricted-users/", RestrictedUsersListView.as_view(), name="restricted_users"),
+    path("block-users/", BlockUserView.as_view(), name="block_users"),
+    path("unblock-users/", UnblockUserView.as_view(), name="unblock_users"),
+    path("blocked-users/", BlockedUsersListView.as_view(), name="blocked_users"),
+
+
+
 ]

@@ -58,11 +58,11 @@ def update_comment(*,comment,content=None):
 @transaction.atomic
 def delete_comment(*, comment):
 
-    comment_id = comment_id
+    
     post = comment_post
 
     comment.delete()
 
-    post.__class__.objects.filter(id=post.id).update(comments_count=F("comments_count") - 1)
+    post.objects.filter(id=post.id).update(comments_count=F("comments_count") - 1)
 
     return True

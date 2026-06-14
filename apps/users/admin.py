@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, UserProfile, RestrictUser, Follow
+from .models import User, UserProfile, RestrictUser, Follow,BlockUser
 
 
 @admin.register(User)
@@ -23,3 +23,8 @@ class RestrictUserAdmin(admin.ModelAdmin):
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["follower", "following", "created_at"]
     search_fields = ["follower", "following"]
+
+@admin.register(BlockUser)
+class BlockUserAdmin(admin.ModelAdmin):
+    list_display = ["blocker","blocked","created_at"]
+    search_fields = ["blocker__username","blocked__username","blocker__email","blocked__email"]

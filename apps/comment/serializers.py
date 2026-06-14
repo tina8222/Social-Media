@@ -30,3 +30,11 @@ class CommentSerializer(serializers.ModelSerializer):
 class UpdateCommentSerializer(CommentValidationMixin,serializers.Serializer):
 
     content = serializers.CharField(required=False)
+
+    
+    def validate(self, attrs):
+
+        if not attrs:
+            raise serializers.ValidationError("No data provided.")
+
+        return attrs

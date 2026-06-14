@@ -1,12 +1,17 @@
+
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
+from django.db.models import Q
 
-from .models import User, Follow, RestrictUser
+
+
+from .models import User, Follow, RestrictUser, BlockUser,FollowRequest
 from .selectors import (get_user_by_email_or_username,get_user_profile, get_follow,
                         get_followers_count, get_following_count, get_restrict_user,
-                        get_restricted_users
+                        get_restricted_users,is_user_blocked,
 )
 
 
@@ -169,3 +174,51 @@ def unrestrict_selected_users(*, usernames, user):
         "detail": "selected users unrestricted"
     }
     return data
+
+
+
+@transaction.atomic
+def block_user(*, blocker, blocked):
+    
+    if blocker == blocked:
+        raise ValidationError({"error": "you cannot block yourself"})
+
+    if is_user_blocked(blocker, blocked):
+        raise ValidationError({"error": "you have already blocked this user"})
+
+    block = BlockUser.objects.create(blocker=blocker,blocked=blocked)
+
+
+    Follow.objects.filter(
+        Q(follower=blocker, following=blocked) |
+        Q(follower=blocked, following=blocker)
+    ).delete()
+
+    
+    FollowRequest.objects.filter(
+        Q(from_user=blocker, to_user=blocked) |
+        Q(from_user=blocked, to_user=blocker)
+    ).delete()
+
+    return block
+
+@transaction.atomic
+def unblock_user(*, blocker, blocked):
+
+    if not is_user_blocked(blocker=blocker,blocked=blocked):
+        raise ValidationError({"error": "you have not blocked this user"})
+
+    BlockUser.objects.filter(blocker=blocker,blocked=blocked).delete()
+
+
+@transaction.atomic
+def remove_blocked_users(*, blocker, usernames):
+
+    deleted_count, _ = (
+        BlockUser.objects.filter(
+            blocker=blocker,
+            blocked__username__in=usernames,
+        ).delete()
+    )
+
+    return deleted_count

@@ -118,7 +118,7 @@ class PostListView(APIView):
 
 class FeedView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
 

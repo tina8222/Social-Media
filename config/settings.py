@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.post.apps.PostConfig',
     'apps.comment.apps.CommentConfig',
+    'apps.notification.apps.NotificationConfig',
 
 ]
 

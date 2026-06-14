@@ -3,13 +3,16 @@ from rest_framework import status
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
-from .selectors import get_post_by_id_for_owner , get_post_by_id , get_user_posts, get_posts
+
+from .selectors import get_post_by_id_for_owner , get_post_by_id , get_user_posts, get_posts, get_public_posts
 
 from .serializers import (
     CreatePostSerializer,
     PostSerializer,
     UpdatePostSerializer,
+    ExploreSerializer
 )
 from .services import (create_post, update_post, delete_post,)
 from .pagination import PostPagination
@@ -114,3 +117,12 @@ class PostListView(APIView):
         serializer = PostSerializer(page,many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+class ExploreView(ListAPIView):
+    permission_classes = [permissions.IsAuthenticated,]
+    pagination_class = PostPagination
+
+    def get(self, request):
+        posts = get_public_posts(user=request.user)
+        serializer = ExploreSerializer(instance=posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

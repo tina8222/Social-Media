@@ -158,3 +158,4 @@ def delete_post(*, post):
             media.file.delete(save=False)
 
     post.delete()
+

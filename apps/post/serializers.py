@@ -63,3 +63,12 @@ class UpdatePostSerializer(MediaValidationMixin,serializers.Serializer):
             raise serializers.ValidationError("No data provided.")
 
         return attrs
+
+
+class ExploreSerializer(serializers.ModelSerializer):
+    owner = serializers.CharField(source="owner.username", read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ["id", "owner", "caption", "likes_count", "comments_count", "media", "created_at"]
+

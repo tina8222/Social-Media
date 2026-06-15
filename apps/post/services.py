@@ -1,5 +1,6 @@
 from django.db import transaction
-from .models import PostMedia , Post
+from .models import PostMedia , Post, SavedPost
+from .selectors import get_post_by_id
 from rest_framework.exceptions import ValidationError
 from django.db.models import Max
 
@@ -159,3 +160,18 @@ def delete_post(*, post):
 
     post.delete()
 
+
+@transaction.atomic
+def save_post(*, post_id, user):
+    post = get_post_by_id(post_id=post_id)
+    obj, created = SavedPost.objects.get_or_create(user=user, post=post)
+    if not created:
+        data = {
+            "error": "you saved this post before"
+        }
+        return data
+
+    data = {
+        "detail": f"{post.owner.username}'s post saved"
+    }
+    return data

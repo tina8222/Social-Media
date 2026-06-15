@@ -14,7 +14,7 @@ from .serializers import (
     UpdatePostSerializer,
     ExploreSerializer
 )
-from .services import (create_post, update_post, delete_post,)
+from .services import (create_post, update_post, delete_post, save_post)
 from .pagination import PostPagination
 
 class CreatePostView(APIView):
@@ -126,3 +126,12 @@ class ExploreView(ListAPIView):
         posts = get_public_posts(user=request.user)
         serializer = ExploreSerializer(instance=posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SavePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated,]
+
+    def post(self, request):
+        post_id = request.query_params.get("post_id")
+        data = save_post(post_id=post_id, user=request.user)
+        return Response(data, status=status.HTTP_201_CREATED)

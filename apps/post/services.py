@@ -161,6 +161,10 @@ def delete_post(*, post):
     post.delete()
 
 
+
+@transaction.atomic
+def get_feed(*,user,ordering="newest"):
+    return get_feed_posts(user=user,ordering=ordering)
 @transaction.atomic
 def save_post(*, post_id, user):
     post = get_post_by_id(post_id=post_id)

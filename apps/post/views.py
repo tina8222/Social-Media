@@ -14,6 +14,7 @@ from .serializers import (
     UpdatePostSerializer,
     ExploreSerializer
 )
+from .services import (create_post, update_post, delete_post,get_feed,)
 from .services import (create_post, update_post, delete_post, save_post, unsave_post)
 from .pagination import PostPagination
 
@@ -118,6 +119,24 @@ class PostListView(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+
+class FeedView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+
+        ordering = request.query_params.get("ordering", "newest")
+
+        posts = get_feed(user=request.user,ordering=ordering)
+
+        paginator = PostPagination()
+
+        page = paginator.paginate_queryset(posts,request)
+
+        serializer = PostSerializer(page,many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 class ExploreView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated,]
     pagination_class = PostPagination

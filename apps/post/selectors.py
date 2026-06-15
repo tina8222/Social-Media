@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from .models import Post
+from .models import Post, SavedPost
 
 ALLOWED_ORDERINGS = {
     "newest":"-created_at",
@@ -57,3 +57,8 @@ def get_feed_posts(*, user, ordering="newest"):
             )
         )
     )
+def get_public_posts(*, user):
+    return Post.objects.exclude(owner=user).filter(visibility=Post.VisibilityChoices.PUBLIC).order_by("-created_at")
+
+def get_save_post(*, post_id, user):
+    return SavedPost.objects.filter(post__id=post_id, user=user).first()

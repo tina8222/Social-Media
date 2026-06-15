@@ -3,7 +3,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from .models import UserProfile, Follow, FollowRequest, RestrictUser
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from .validators import validator_target_user
@@ -197,6 +196,7 @@ class RestrictedUsersListView(ListAPIView):
 class BlockUserView(APIView):
 
     permission_classes = [IsAuthenticated]
+    
 
     def post(self, request):
 
@@ -213,7 +213,7 @@ class BlockUserView(APIView):
 class UnblockUserView(APIView):
 
     permission_classes = [IsAuthenticated]
-
+    
     def delete(self, request):
         username = request.query_params.get("username")
 

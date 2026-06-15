@@ -3,15 +3,19 @@ from rest_framework import status
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
-from .selectors import get_post_by_id_for_owner , get_post_by_id , get_user_posts, get_posts
+
+from .selectors import get_post_by_id_for_owner , get_post_by_id , get_user_posts, get_posts, get_public_posts
 
 from .serializers import (
     CreatePostSerializer,
     PostSerializer,
     UpdatePostSerializer,
+    ExploreSerializer
 )
 from .services import (create_post, update_post, delete_post,get_feed,)
+from .services import (create_post, update_post, delete_post, save_post, unsave_post)
 from .pagination import PostPagination
 
 class CreatePostView(APIView):
@@ -133,3 +137,29 @@ class FeedView(APIView):
         serializer = PostSerializer(page,many=True)
 
         return paginator.get_paginated_response(serializer.data)
+class ExploreView(ListAPIView):
+    permission_classes = [permissions.IsAuthenticated,]
+    pagination_class = PostPagination
+
+    def get(self, request):
+        posts = get_public_posts(user=request.user)
+        serializer = ExploreSerializer(instance=posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SavePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated,]
+
+    def post(self, request):
+        post_id = request.data.get("post_id")
+        data = save_post(post_id=post_id, user=request.user)
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
+class UnsavePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request):
+        post_id = request.data.get("post_id")
+        data = unsave_post(user=request.user, post_id=post_id)
+        return Response(data, status=status.HTTP_200_OK)

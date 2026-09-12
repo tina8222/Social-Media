@@ -1,27 +1,24 @@
-Social Media API
+# Social Media API
 
-A scalable Social Media REST API built with Django and Django REST Framework.
-
-This project was developed collaboratively as a backend social media platform, providing core features such as user authentication, posts, comments, likes, and notifications.
+A scalable Social Media REST API built with **Django** and **Django REST Framework**.  
+This project provides the core backend functionalities of a social networking platform, including user authentication, posts, comments, likes, and notifications.
 
 ---
 
-Features
+## Features
 
 - User Authentication
-- Create, Update, and Delete Posts
-- Like / Unlike System
+- Create, Update, Delete Posts
+- Like System
 - Comment System
 - Notification System
 - Image Upload Support
-- JWT Authentication
 - RESTful API Design
 - Modular Django Apps Architecture
-- API Documentation with Swagger / OpenAPI
 
 ---
 
-Tech Stack
+## Tech Stack
 
 - Python 3.12+
 - Django 5
@@ -29,12 +26,13 @@ Tech Stack
 - PostgreSQL
 - JWT Authentication
 - Pillow
-- drf-spectacular
+- drf-spectacular (Swagger/OpenAPI)
 
 ---
 
-Project Structure
+## Project Structure
 
+```
 Social-Media/
 │
 ├── apps/
@@ -45,119 +43,166 @@ Social-Media/
 │   └── notification/
 │
 ├── config/
+│
 ├── media/
 ├── manage.py
 └── requirements.txt
+```
 
 ---
 
-Installation
+## Installation
 
 Clone the repository:
 
-git clone https://github.com/tina8222/Social-Media.git
+```bash
+git clone https://github.com/ManiNaseri/Social-Media.git
 cd Social-Media
+```
 
 Create a virtual environment:
 
+```bash
 python -m venv .venv
+```
 
 Activate it:
 
-Windows
+### Windows
 
+```bash
 .venv\Scripts\activate
+```
 
-Linux / macOS
+### Linux / macOS
 
+```bash
 source .venv/bin/activate
+```
 
-Install the dependencies:
+Install dependencies:
 
+```bash
 pip install -r requirements.txt
+```
 
 ---
 
-Environment Variables
+## Environment Variables
 
-Create a ".env" file based on the provided environment example:
+Copy the example environment file:
 
+```bash
 cp .env.example .env
+```
 
-Configure your database and secret key inside the ".env" file.
+Configure your database and secret keys inside the `.env` file.
 
 Example:
 
+```env
 SECRET_KEY=your_secret_key
+
 DEBUG=True
 
 DB_NAME=social_media_db
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
-DB_HOST=localhost
+DB_HOST=localhost or etc..
 DB_PORT=5432
+```
 
 ---
 
-Database
+## Database
 
 Run migrations:
 
+```bash
 python manage.py migrate
+```
 
 Create a superuser:
 
+```bash
 python manage.py createsuperuser
+```
 
 ---
 
-Run the Project
+## Run the Project
 
-Start the development server:
-
+```bash
 python manage.py runserver
+```
 
-The API will be available at:
+Server:
 
+```
 http://127.0.0.1:8000/
+```
 
 ---
 
-API Modules
+## API Modules
 
-Module| Description
-Users| Authentication and user management
-Posts| Create, update, delete, and retrieve posts
-Comments| Create and manage comments
-Likes| Like and unlike posts
-Notifications| Manage user notifications
+| Module | Description |
+|---------|-------------|
+| Users | Authentication & User Management |
+| Posts | CRUD operations for posts |
+| Comments | Create and manage comments |
+| Likes | Like/Unlike functionality |
+| Notifications | User notification system |
 
 ---
 
-API Documentation
+## 📖 API Documentation
 
-API documentation is available through Swagger / OpenAPI using drf-spectacular.
+If drf-spectacular is enabled, Swagger/OpenAPI documentation can be accessed via:
 
+```
 /api/schema/
 /api/docs/
+```
 
 ---
 
-Project Collaboration
+## Contributing
 
-This project was developed collaboratively as part of a backend development project.
+Contributions are welcome!
 
-The development process included working with Git, GitLab, GitHub, Django REST Framework, and collaborative code review through Merge Requests.
+1. Fork the repository
+2. Create a feature branch
+
+```bash
+git checkout -b feature/new-feature
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Add new feature"
+```
+
+4. Push your branch
+
+```bash
+git push origin feature/new-feature
+```
+
+5. Open a Pull Request
 
 ---
 
-Contributors
-
-- Tina Mirdar Soltani — Backend Developer
-
-
----
-
-License
+## License
 
 This project is available under the MIT License.
+
+---
+
+## Author
+
+Tina Mirdar Soltani
+
+tiGitHub:
+https://github.com/ManiNaseri

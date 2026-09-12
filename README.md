@@ -200,9 +200,6 @@ This project is available under the MIT License.
 
 ---
 
-## Author
-
-Tina Mirdar Soltani
 
 tiGitHub:
 https://github.com/ManiNaseri
